@@ -1,0 +1,169 @@
+---
+title: "R Notebook"
+editor_options: 
+  chunk_output_type: console
+---
+
+## load libs
+
+```{r}
+needs(tidyverse, jsonlite)
+#library(tidyverse)
+options(scipen=999)
+
+```
+
+
+## load example history
+
+```{r}
+matchId = '1001540028'
+
+history = read_json(str_c('scrape/riot/raw/matchhistory/', matchId, '.json'))
+
+names(history)
+history$gameCreation
+```
+
+## read all match histories
+```{r}
+path <- "scrape/riot/raw/matchhistory/"
+files <- dir(path, pattern = "*.json")
+
+allhistory <- files %>%
+  map_df(~fromJSON(file.path(path, .), flatten = TRUE))
+```
+
+```{r}
+temp <- list.files(path, pattern="*.json", full.names=TRUE)
+movies <- purrr::map_df(temp, function(x) { 
+  purrr::map(jsonlite::fromJSON(x), function(y) ifelse(is.null(y), NA, y)) 
+})
+games = movies
+```
+
+## number of games over time
+
+```{r}
+games %>% 
+  ggplot(aes(gameCreation)) + geom_area(stat = "bin", bins=200) 
+
+games %>% 
+  ggplot(aes(gameCreation)) + geom_histogram(stat = "bin", bins=200)
+
+games %>% 
+  ggplot(aes(seasonId)) + geom_histogram(stat = "bin", bins=100)
+
+games %>% 
+  ggplot(aes(gameDuration)) + geom_histogram(stat = "bin", bins=100)
+
+games %>% 
+  ggplot(aes(gameDuration)) +
+  geom_histogram(stat = "bin", bins=100) +
+  facet_wrap(~seasonId)
+  
+
+games %>% 
+  filter(seasonId == 11) %>% 
+  ggplot(aes(gameDuration)) +
+  geom_histogram(stat = "bin", bins=100) +
+  facet_wrap(~gameVersion)
+
+
+
+games %>% 
+  filter(seasonId == 11) %>% 
+  ggplot(aes(gameDuration)) +
+  geom_density(kernel = "gaussian") +
+  facet_wrap(~gameVersion)
+
+games %>% 
+  filter(seasonId == 11) %>% 
+  ggplot(aes(gameVersion, gameDuration)) +
+  geom_violin(kernel = "gaussian")
+
+games = games %>% 
+  arrange(gameCreation) %>% 
+  mutate(
+    season = factor(seasonId),
+    patch = patchF(gameVersion)
+  )
+
+patchF = factor(games$gameVersion)
+games$patch = factor(games$gameVersion, levels = unique(games$gameVersion))
+
+games %>% 
+  ggplot(aes(patch, gameDuration, color = season)) +
+  geom_boxplot() + 
+  scale_color_brewer(palette = "Set2") +
+  coord_flip()
+
+
+games %>% 
+  ggplot(aes(patch, gameDuration, color = season)) +
+  geom_violin() + 
+  scale_color_brewer(palette = "Set2") +
+  coord_flip()
+
+needs(ggridges)
+
+ggplot(iris, aes(x = Sepal.Length, y = Species)) + geom_density_ridges()
+
+games %>% 
+  ggplot(aes(y = patch, x = gameDuration, fill = season)) +
+  geom_density_ridges() + 
+  scale_color_brewer(palette = "Set2") + 
+  xlim(c(1000, 4000))
+  #coord_flip()
+
+```
+
+connected scatter plot showing average duration and chance of comeback for each patch
+
+
+```
+needs(parallel, rjson)
+json_files<-list.files(path="scrape/riot/raw/matchhistory",pattern="*.json",full.names = TRUE)
+cl <- makeCluster(detectCores() - 1)
+json_list<-parLapply(cl,json_files,function(x) rjson::fromJSON(file=x,method = "R"))
+stopCluster(cl)
+
+```
+
+
+## chart gold difference and victory time
+
+
+
+## line charts of all cs per minute
+
+
+## chance of winning a losing game
+
+
+## number of champs picked each patch
+
+
+## time since champ was picked
+ xin hasn't been picked in NA for since 2015
+
+
+## how far behind the meta is NA
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
