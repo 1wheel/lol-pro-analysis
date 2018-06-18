@@ -35,12 +35,21 @@ allhistory <- files %>%
 ```
 
 ```{r}
-temp <- list.files(path, pattern="*.json", full.names=TRUE)
-movies <- purrr::map_df(temp, function(x) { 
+games = list.files( "scrape/riot/raw/matchhistory/", full.names=TRUE) %>% 
+  map_df(function(x) { 
   purrr::map(jsonlite::fromJSON(x), function(y) ifelse(is.null(y), NA, y)) 
-})
-games = movies
+  })
+
+games = games %>% 
+  arrange(gameCreation) %>% 
+  mutate(
+    season = factor(seasonId),
+    patch = patchF(gameVersion)
+  )
+
+games$patch = factor(games$gameVersion, levels = unique(games$gameVersion))
 ```
+
 
 ## number of games over time
 
@@ -82,15 +91,6 @@ games %>%
   ggplot(aes(gameVersion, gameDuration)) +
   geom_violin(kernel = "gaussian")
 
-games = games %>% 
-  arrange(gameCreation) %>% 
-  mutate(
-    season = factor(seasonId),
-    patch = patchF(gameVersion)
-  )
-
-patchF = factor(games$gameVersion)
-games$patch = factor(games$gameVersion, levels = unique(games$gameVersion))
 
 games %>% 
   ggplot(aes(patch, gameDuration, color = season)) +
@@ -116,19 +116,65 @@ games %>%
   xlim(c(1000, 4000))
   #coord_flip()
 
-```
-
-connected scatter plot showing average duration and chance of comeback for each patch
-
+needs("ggthemes")
 
 ```
-needs(parallel, rjson)
-json_files<-list.files(path="scrape/riot/raw/matchhistory",pattern="*.json",full.names = TRUE)
-cl <- makeCluster(detectCores() - 1)
-json_list<-parLapply(cl,json_files,function(x) rjson::fromJSON(file=x,method = "R"))
-stopCluster(cl)
+
+
+## connected scatter plot showing average duration and chance of comeback for each patch
+
+```{r}
+timelines = list.files( "scrape/riot/raw/matchtimeline/", full.names=TRUE) %>% 
+  map_df(function(x) { 
+    purrr::map(jsonlite::fromJSON(x), function(y) ifelse(is.null(y), NA, y)) 
+  })
 
 ```
+
+
+What's in a timeline
+
+```{r}
+tl1 = jsonlite::fromJSON('scrape/riot/raw/matchtimeline/1000188.json')
+```
+
+
+missing timestamp key in each timeframe...
+
+```{r}
+tl10 = list.files( "scrape/riot/raw/matchtimeline/", full.names=TRUE) %>% 
+  head() %>% 
+  map_df(function(x) { 
+    map(jsonlite::fromJSON(x), function(y) ifelse(is.null(y), y, y)) 
+  })
+```
+
+```{r}
+try_filter <- function(df) {
+  tryCatch(
+    df %>%
+      filter(Sepal.Length == 4.6),
+    error = function(e) data.frame())
+}
+
+
+tl10 = list.files( "scrape/riot/raw/matchtimeline/", full.names=TRUE) %>% 
+  head() %>% 
+  map_df(jsonlite::fromJSON, try_filter)
+```
+
+```{r}
+files =list.files( "scrape/riot/raw/matchtimeline/", full.names=TRUE)
+
+pages <- list()
+for(file in files){
+  pages[[length(pages)+1]] <- jsonlite::fromJSON(file)$frames
+}
+
+tlrbind <- rbind_pages(pages)
+
+```
+
 
 
 ## chart gold difference and victory time
