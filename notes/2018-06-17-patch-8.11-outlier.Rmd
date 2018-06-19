@@ -129,13 +129,21 @@ timelines = list.files( "scrape/riot/raw/matchtimeline/", full.names=TRUE) %>%
     purrr::map(jsonlite::fromJSON(x), function(y) ifelse(is.null(y), NA, y)) 
   })
 
+timelineFrames = timelines$frames
+
+tl1mapped = timelines[[1]]
 ```
 
 
 What's in a timeline
 
 ```{r}
-tl1 = jsonlite::fromJSON('scrape/riot/raw/matchtimeline/1000188.json')
+tl1 = jsonlite::fromJSON('scrape/riot/raw/matchtimeline/160160.json')
+tl2 = jsonlite::fromJSON('scrape/riot/raw/matchtimeline/160172.json')
+
+tl1 %>% names
+thing = unnest(tl1$frames)
+
 ```
 
 
