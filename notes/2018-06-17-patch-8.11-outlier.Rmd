@@ -8,7 +8,6 @@ editor_options:
 
 ```{r}
 needs(tidyverse, jsonlite)
-#library(tidyverse)
 options(scipen=999)
 
 ```
@@ -184,6 +183,34 @@ tlrbind <- rbind_pages(pages)
 ```
 
 
+okayyy lets just use some csvs
+```{r}
+frames <- list.files("scrape/riot/raw/matchtimeline-frames/", full.names = TRUE) %>% 
+  map_df(read_csv)
+
+frames = frames %>% 
+  mutate(
+      isBlue = participantId < 6,
+      team = ifelse(isBlue, 'B', 'R')
+    )
+```
+
+how much gold at 15 minutes?
+
+```{r}
+golddif = frames %>% 
+  group_by(game, timestamp, team) %>% 
+  summarise(gold = sum(totalGold)) %>% 
+  spread(team, gold) %>% 
+  mutate(dif = R - B)
+
+
+golddif %>% 
+  filter(60000*5 < timestamp & timestamp < 60000*25) %>% 
+  ggplot(aes(dif)) +
+  geom_histogram() +
+  facet_wrap(~timestamp)
+```
 
 ## chart gold difference and victory time
 

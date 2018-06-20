@@ -2,8 +2,6 @@ var { _, d3, fs, glob, io, queue, request } = require('scrape-stl')
 
 
 var matches = glob.sync(__dirname + '/raw/matchtimeline/*').forEach((path, i) => {
-  if (i) return
-
   var game = path.split('matchtimeline/')[1].replace('.json', '')
   
   var outFrames = []
@@ -23,8 +21,6 @@ var matches = glob.sync(__dirname + '/raw/matchtimeline/*').forEach((path, i) =>
       outFrames.push(d)
     })
 
-    console.log(d.events)
-
     d.events.forEach(d => {
       d.game = game
 
@@ -39,7 +35,6 @@ var matches = glob.sync(__dirname + '/raw/matchtimeline/*').forEach((path, i) =>
 
       outEvents.push(d)
     })
-
   })
 
 
