@@ -1,22 +1,18 @@
 var { _, d3, fs, glob, io, queue, request } = require('scrape-stl')
 var {exec, execSync} = require('child_process')
 
-
 var q = queue(1)
 
 var matches = glob.sync(__dirname + '/raw/highlanderMatchDetails/*')
   .map(io.readDataSync)
 
 var matchPaths = glob.sync(__dirname + '/raw/highlanderMatchDetails/*')
-// console.log(matchPaths[1642])
 
 var isHistoryDL  = _.indexBy(glob.sync(__dirname + '/raw/matchhistory/*').map(pathToSlug))
 var isTimelineDl = _.indexBy(glob.sync(__dirname + '/raw/matchtimeline/*').map(pathToSlug))
 
 
 matches.forEach((match, i) => {
-  // if (!match) 
-  // console.log(i)
   match.gameIdMappings.forEach(({id, gameHash}) => {
     q.defer(downloadPage, {gameId: id, gameHash, match})
   })
@@ -33,34 +29,14 @@ function downloadPage({gameId, gameHash, match}, cb){
 
   var path = __dirname + `/raw/matchhistory/${gameId}.json`
   var url = `${baseurl}${gameRealm}/${gameId}?gameHash=${gameHash}&api_key=RGAPI-36a81422-d6a3-41a8-97a1-519053f0eda8`
-  console.log(url)
-  console.log(path)
-
   downloadCurl(path, url)
-
-
-  // request(url, function(err, res){
-  //   console.log(gameId, err)
-
-  //   setTimeout(cb, 1000*10)
-  //   if (!res || !res.body || res.body.length < 1000) return console.log(res.body)
-  //   fs.writeFile(__dirname + `/raw/matchhistory/${gameId}.json`, res.body, function(){})
-  // })
+  console.log(url)
   
   var path = __dirname + `/raw/matchtimeline/${gameId}.json`
   var url = `${baseurl}${gameRealm}/${gameId}/timeline?gameHash=${gameHash}&api_key=RGAPI-36a81422-d6a3-41a8-97a1-519053f0eda8`
   downloadCurl(path, url)
 
-
   setTimeout(cb, 1000*2)
-  // console.log(url)
-  // request(url, function(err, res){
-  //   console.log(gameId, err)
-
-  //   if (!res || !res.body || res.body.length < 1000) return
-  //   fs.writeFile(__dirname + `/raw/matchtimeline/${gameId}.json`, res.body, function(){})
-  // })
-
 }
 
 function pathToSlug(d){
