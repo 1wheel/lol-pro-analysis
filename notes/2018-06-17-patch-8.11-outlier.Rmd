@@ -207,7 +207,7 @@ golddif = frames %>%
 
 golddif %>% 
   filter(60000*5 < timestamp & timestamp < 60000*25) %>% 
-  ggplot(aes(dif)) +
+  ggplot(aes(dif/(R + B))) +
   geom_histogram() +
   facet_wrap(~timestamp)
 ```
